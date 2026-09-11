@@ -1,0 +1,10 @@
+/.git*            export-ignore
+/.php-cs-fixer.*  export-ignore
+/Makefile         export-ignore
+/compose.yaml     export-ignore
+/docker/          export-ignore
+/phpstan*.neon    export-ignore
+/phpunit.xml.dist export-ignore
+/README.md        export-ignore
+/tests/           export-ignore
+/docs/            export-ignore

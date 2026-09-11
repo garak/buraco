@@ -1,0 +1,8 @@
+services:
+    php:
+        build:
+            context: docker
+        volumes:
+            - ./:/srv/buraco
+        working_dir: /srv/buraco
+        tty: true

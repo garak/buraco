@@ -1,0 +1,74 @@
+name: build
+
+on:
+    push:
+        branches:
+            - main
+    pull_request: ~
+
+jobs:
+    phpstan:
+        runs-on: ubuntu-26.04
+        name: PHPStan
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - run: |
+                  sed -e :a -e '$d;N;2,3ba' -e 'P;D' -i phpstan.neon
+            - name: PHPStan
+              uses: docker://oskarstark/phpstan-ga
+              env:
+                  REQUIRE_DEV: true
+              with:
+                  args: analyse
+    cs-fixer:
+        runs-on: ubuntu-26.04
+        name: PHP-CS-Fixer
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Fix CS
+              uses: docker://oskarstark/php-cs-fixer-ga
+              with:
+                args: --diff --dry-run
+    tests:
+        runs-on: ubuntu-26.04
+        strategy:
+            max-parallel: 1
+            matrix:
+                php:
+                    - '8.3'
+                    - '8.4'
+                    - '8.5'
+                    - '8.6'
+                include:
+                    - description: 'lowest'
+                      php: '8.3'
+                      dependencies: lowest
+                    - description: '8.4'
+                      php: '8.4'
+                    - description: '8.5'
+                      php: '8.5'
+                    - description: 'latest'
+                      php: '8.6'
+        name: PHP ${{ matrix.php }} tests
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php }}
+            - name: Install dependencies
+              uses: ramsey/composer-install@v4
+              with:
+                  dependency-versions: ${{ matrix.dependencies }}
+            - name: Run tests
+              run: vendor/bin/phpunit --colors=always --coverage-clover coverage.xml
+            - name: Publish code coverage
+              if: ${{ matrix.php == '8.5' }}
+              uses: qltysh/qlty-action/coverage@v1
+              with:
+                  token: ${{secrets.QLTY_COVERAGE_TOKEN}}
+                  format: clover
+                  files: coverage.xml
