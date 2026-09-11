@@ -51,6 +51,48 @@ final class MeldTest extends TestCase
     }
 
     #[Test]
+    public function anyOrder(): void
+    {
+        $run = Meld::createFromString('3h,2h,Ah', anyOrder: true);
+        self::assertInstanceOf(Run::class, $run);
+        self::assertSame('Ah,2h,3h', (string) $run);
+        self::assertSame('2h,3h,wb', (string) Meld::createFromString('3h,2h,wb', anyOrder: true));
+        // a set is still guessed first
+        self::assertInstanceOf(Set::class, Meld::createFromString('Ks,Kh,Kd', anyOrder: true));
+        // cards already making a run are kept as given
+        self::assertSame('3h,4h,5h,2h', (string) Meld::createFromString('3h,4h,5h,2h', anyOrder: true));
+        self::assertSame('Ah,2h,3h', (string) Meld::fromCards(['a' => Card::fromRankSuit('3h'), 'b' => Card::fromRankSuit('2h'), 'c' => Card::fromRankSuit('Ah')], anyOrder: true));
+    }
+
+    #[Test]
+    public function anyOrderIsOptIn(): void
+    {
+        try {
+            Meld::createFromString('3h,2h,Ah');
+            self::fail('Runs must be given in order by default.');
+        } catch (InvalidMeldException $e) {
+            self::assertSame('Cards in a run must be consecutive, got 3h,2h,Ah.', $e->getMessage());
+        }
+    }
+
+    #[Test]
+    public function anyOrderReportsTheCardsAsGiven(): void
+    {
+        try {
+            Meld::createFromString('Kh,Qs,Kd', anyOrder: true);
+            self::fail('No order makes a run.');
+        } catch (InvalidMeldException $e) {
+            self::assertSame('All cards in a run must share the suit, got Kh,Qs,Kd.', $e->getMessage());
+        }
+        try {
+            Meld::createFromString('Kh,wb,2s', anyOrder: true);
+            self::fail('Neither a set nor a run, in any order.');
+        } catch (InvalidMeldException $e) {
+            self::assertSame('A set cannot have more than 1 wildcard, got Kh,wb,2s.', $e->getMessage());
+        }
+    }
+
+    #[Test]
     public function tooShort(): void
     {
         try {

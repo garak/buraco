@@ -37,10 +37,39 @@ abstract class Meld implements \Countable, \Stringable
      * A set that turns out to be invalid is retried as a run (e.g. "2h,3h,wb" is a run with a natural two).
      *
      * @param array<int|string, Card> $cards
+     * @param bool                    $anyOrder whether the cards of a run may be given in any order (see Run::fromAnyOrder());
+     *                                          when no order makes a run of them, the error is about the cards as given
      *
      * @throws InvalidMeldException
      */
-    public static function fromCards(array $cards): self
+    public static function fromCards(array $cards, bool $anyOrder = false): self
+    {
+        try {
+            return self::guess($cards);
+        } catch (InvalidMeldException $e) {
+            if (!$anyOrder) {
+                throw $e;
+            }
+
+            return Run::fromAnyOrder($cards) ?? throw $e;
+        }
+    }
+
+    /**
+     * @param string $cards    comma-separated cards (e.g. "5h,5d,wb")
+     * @param bool   $anyOrder see fromCards()
+     */
+    public static function createFromString(string $cards, bool $anyOrder = false): self
+    {
+        return static::fromCards(\array_map(static fn (string $rs): Card => Card::fromRankSuit($rs), \explode(',', $cards)), $anyOrder);
+    }
+
+    /**
+     * @param array<int|string, Card> $cards
+     *
+     * @throws InvalidMeldException
+     */
+    private static function guess(array $cards): self
     {
         $regular = \array_filter($cards, static fn (Card $card): bool => !CardValue::isWildcard($card));
         $ranks = \array_unique(\array_map(static fn (Card $card): string => $card->getRank()->value, $regular));
@@ -56,14 +85,6 @@ abstract class Meld implements \Countable, \Stringable
                 throw $e;
             }
         }
-    }
-
-    /**
-     * @param string $cards comma-separated cards (e.g. "5h,5d,wb")
-     */
-    public static function createFromString(string $cards): self
-    {
-        return static::fromCards(\array_map(static fn (string $rs): Card => Card::fromRankSuit($rs), \explode(',', $cards)));
     }
 
     /**

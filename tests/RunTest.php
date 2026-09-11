@@ -84,6 +84,67 @@ final class RunTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('anyOrderProvider')]
+    public function fromAnyOrder(string $cards, string $expected, ?string $wildcard): void
+    {
+        $run = Run::fromAnyOrder(self::cards($cards));
+        self::assertNotNull($run, \sprintf('Some order of "%s" makes a run.', $cards));
+        self::assertSame($expected, $run->toString(true));
+        self::assertSame($wildcard, null === $run->getWildcard() ? null : (string) $run->getWildcard());
+    }
+
+    /** @return iterable<string, array{string, string, ?string}> */
+    public static function anyOrderProvider(): iterable
+    {
+        yield 'already in order' => ['Ah,2h,3h', 'Ah,2h,3h', null];
+        yield 'descending' => ['3h,2h,Ah', 'Ah,2h,3h', null];
+        yield 'shuffled' => ['5d,3d,6d,4d', '3d,4d,5d,6d', null];
+        yield 'ace high when it only fits high' => ['As,Qs,Ks', 'Qs,Ks,As', null];
+        yield 'ace low when it fits low' => ['Kc,Qc,Jc,Tc,9c,8c,7c,6c,5c,4c,3c,2c,Ac', 'Ac,2c,3c,4c,5c,6c,7c,8c,9c,Tc,Jc,Qc,Kc', null];
+        yield 'joker at the end rather than at the start' => ['3h,2h,wb', '2h,3h,wb', 'wb'];
+        yield 'joker in the middle' => ['7d,wb,5d', '5d,wb,7d', 'wb'];
+        yield 'joker as high ace' => ['wb,Kh,Qh', 'Qh,Kh,wb', 'wb'];
+        yield 'joker as low ace' => ['3h,wb,Ah', 'Ah,wb,3h', 'wb'];
+        yield 'two of the suit in its natural place' => ['4c,2c,3c', '2c,3c,4c', null];
+        yield 'two of the suit as a wildcard when it does not fit' => ['5h,4h,2h', '2h,4h,5h', '2h'];
+        yield 'two of the suit as a wildcard below the ace high' => ['Kh,2h,Ah', '2h,Kh,Ah', '2h'];
+        yield 'two of another suit as a wildcard' => ['7d,5d,2c', '5d,2c,7d', '2c'];
+        yield 'natural two plus a wildcard' => ['2c,3h,Ah,2h', 'Ah,2h,3h,2c', '2c'];
+        yield 'natural two rather than a wildcard' => ['wb,2h,4h,3h', '2h,3h,4h,wb', 'wb'];
+        yield 'backs are irrelevant' => ['3hr,2hb,Ahr', 'Ahr,2hb,3hr', null];
+    }
+
+    #[Test]
+    public function fromAnyOrderIgnoresKeys(): void
+    {
+        $run = Run::fromAnyOrder(['a' => Card::fromRankSuit('3h'), 'b' => Card::fromRankSuit('Ah'), 'c' => Card::fromRankSuit('2h')]);
+        self::assertNotNull($run);
+        self::assertSame('Ah,2h,3h', (string) $run);
+    }
+
+    #[Test]
+    #[DataProvider('noOrderProvider')]
+    public function noOrderMakesARun(string $cards): void
+    {
+        self::assertNull(Run::fromAnyOrder(self::cards($cards)));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function noOrderProvider(): iterable
+    {
+        yield 'too short' => ['2h,Ah'];
+        yield 'different suits' => ['Ah,3c,2h'];
+        yield 'not consecutive' => ['4h,Ah,2h'];
+        yield 'duplicate' => ['5h,6h,5h'];
+        yield 'ace in the middle' => ['Kh,Ah,2h,3h'];
+        yield 'ace both low and high' => ['Ac,2c,3c,4c,5c,6c,7c,8c,9c,Tc,Jc,Qc,Kc,Ac'];
+        yield 'two wildcards' => ['wr,5h,wb'];
+        yield 'three wildcards' => ['2c,5h,wb,wr'];
+        yield 'only wildcards' => ['wb,2c,wr'];
+        yield 'a set is not a run' => ['Kh,Kd,Ks'];
+    }
+
+    #[Test]
     #[DataProvider('buracoProvider')]
     public function buraco(string $cards, ?Buraco $expected): void
     {

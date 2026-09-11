@@ -2,6 +2,7 @@
 
 namespace Garak\Buraco\Test;
 
+use Garak\Buraco\Exception\InvalidMeldException;
 use Garak\Buraco\Meld;
 use Garak\Buraco\Table;
 use PHPUnit\Framework\Attributes\Test;
@@ -45,6 +46,14 @@ final class TableTest extends TestCase
         $dirtyOnly = Table::createFromString('Kh,Kd,Ks;3h,4h,5h,6h,7h,8h,wb');
         self::assertTrue($dirtyOnly->hasBuraco());
         self::assertFalse($dirtyOnly->hasBuraco(clean: true));
+    }
+
+    #[Test]
+    public function anyOrder(): void
+    {
+        self::assertSame('Kh,Kd,Ks;Ah,2h,3h', (string) Table::createFromString('Kh,Kd,Ks;3h,2h,Ah', anyOrder: true));
+        $this->expectException(InvalidMeldException::class);
+        Table::createFromString('Kh,Kd,Ks;3h,2h,Ah');
     }
 
     #[Test]

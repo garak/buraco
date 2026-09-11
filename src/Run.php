@@ -3,6 +3,7 @@
 namespace Garak\Buraco;
 
 use Garak\Buraco\Exception\InvalidMeldException;
+use Garak\Card\Card;
 use Garak\Card\Suit;
 
 /**
@@ -15,10 +16,73 @@ use Garak\Card\Suit;
  */
 final class Run extends Meld
 {
+    /** A valid run holds one wildcard at most, plus maybe a natural two: more movable cards are not worth trying. */
+    private const int MAX_MOVABLE = 2;
+
     /** @var list<int> */
     private array $values;
 
     private Suit $suit;
+
+    /**
+     * The run the cards make in some order, or null when no order makes one.
+     *
+     * The natural cards go in ascending order, the ace low unless it only fits high. A wildcard is tried in every
+     * place, from the end of the run backwards, so that "3h,2h,wb" reads as 2h,3h,wb rather than wb,2h,3h; a two of
+     * the run's suit is tried in its natural place first ("4c,2c,3c" is 2c,3c,4c, not 3c,4c,2c).
+     *
+     * @param array<int|string, Card> $cards
+     */
+    public static function fromAnyOrder(array $cards): ?self
+    {
+        $cards = \array_values($cards);
+        $movable = \array_values(\array_filter($cards, static fn (Card $card): bool => CardValue::isWildcard($card)));
+        if (\count($movable) > self::MAX_MOVABLE) {
+            return null;
+        }
+        $naturals = \array_values(\array_filter($cards, static fn (Card $card): bool => !CardValue::isWildcard($card)));
+        if ([] === $naturals) {
+            return null;
+        }
+        $suit = $naturals[0]->getSuit();
+        foreach ([false, true] as $aceHigh) {
+            \usort($naturals, static fn (Card $a, Card $b): int => CardValue::of($a, $aceHigh) <=> CardValue::of($b, $aceHigh));
+            if (null !== $run = self::place($naturals, $movable, $suit)) {
+                return $run;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<Card> $cards   in order
+     * @param list<Card> $movable the cards still to find a place for
+     */
+    private static function place(array $cards, array $movable, Suit $suit): ?self
+    {
+        if ([] === $movable) {
+            try {
+                return new self($cards);
+            } catch (InvalidMeldException) {
+                return null;
+            }
+        }
+        $card = \array_shift($movable);
+        $positions = \range(\count($cards), 0);
+        if (CardValue::isTwo($card) && $card->getSuit()->isEqual($suit)) {
+            \array_unshift($positions, 0);
+        }
+        foreach ($positions as $i) {
+            $attempt = $cards;
+            \array_splice($attempt, $i, 0, [$card]);
+            if (null !== $run = self::place($attempt, $movable, $suit)) {
+                return $run;
+            }
+        }
+
+        return null;
+    }
 
     protected function validate(): void
     {

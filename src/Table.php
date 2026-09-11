@@ -19,15 +19,16 @@ final readonly class Table implements \Countable, \Stringable
     }
 
     /**
-     * @param string $melds semicolon-separated melds, each one comma-separated (e.g. "5h,5d,5s;7c,8c,9c")
+     * @param string $melds    semicolon-separated melds, each one comma-separated (e.g. "5h,5d,5s;7c,8c,9c")
+     * @param bool   $anyOrder whether the cards of a run may be given in any order (see Meld::fromCards())
      */
-    public static function createFromString(string $melds): self
+    public static function createFromString(string $melds, bool $anyOrder = false): self
     {
         if ('' === $melds) {
             return new self();
         }
 
-        return new self(\array_map(static fn (string $meld): Meld => Meld::createFromString($meld), \explode(';', $melds)));
+        return new self(\array_map(static fn (string $meld): Meld => Meld::createFromString($meld, $anyOrder), \explode(';', $melds)));
     }
 
     public function __toString(): string

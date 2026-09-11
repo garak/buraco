@@ -133,7 +133,17 @@ close the game without a buraco) is refused up front, so the player is never stu
 `Meld::createFromString()` and `Meld::fromCards()` guess the type: a `Set` when all the cards that are not
 jokers or twos share the rank, a `Run` otherwise. Use `new Set($cards)` or `new Run($cards)` to be explicit.
 Runs must be given in ascending order, so that wildcards get the value implied by their position; a wildcard
-after the king stands for a high ace.
+after the king stands for a high ace. Pass `anyOrder: true` to let the library sort the cards of a run for you:
+naturals go ascending, the ace low unless it only fits high, a joker is tried from the end backwards, and a two
+of the run's suit goes in its natural place when it fits. Cards already forming a valid meld are kept as given.
+
+```php
+Meld::createFromString('3h,2h,Ah', anyOrder: true);  // Ah,2h,3h
+Meld::createFromString('3h,2h,wb', anyOrder: true);  // 2h,3h,wb
+Table::createFromString('Kh,Kd,Ks;7c,5c,wb', anyOrder: true);
+```
+
+When no order makes a run, the exception describes the cards as given.
 
 ```php
 $run = new Run([...]);   // 2h,3h,4h,wb
