@@ -25,6 +25,8 @@ It is built on top of [garak/card](https://github.com/garak/card):
 * `Score` — the breakdown of a team's score
 * `MeldFinder` — what can be melded with a bunch of cards, useful for hints
 
+Want to see it in action? Go to [burraco.garak.it](https://burraco.garak.it/) and play it yourself!
+
 ### Rules
 
 Defaults follow the Italian tournament code (FITAB). All numbers are configurable through `Rules`.
@@ -35,7 +37,7 @@ Defaults follow the Italian tournament code (FITAB). All numbers are configurabl
 * A **set** is 3 to 9 cards of the same rank, suits don't matter. A **run** is 3 to 14 consecutive cards of the same
   suit; the ace is low when it comes first (A,2,3) and high when it comes last (Q,K,A), never both.
   A meld holds at most one wildcard, and a team cannot have two sets of the same rank.
-* On their turn a player **draws** a card from the stock or **takes** the whole discard pile, **melds** as much as
+* On their turn, a player **draws** a card from the stock or **takes** the whole discard pile, **melds** as much as
   they like on the team's table (new melds, or cards added to existing ones), and **discards** one card.
 * A **buraco** is a meld of 7 or more cards. A clean one (no wildcard) is worth 200 points, a dirty one 100,
   a semi-clean one (wildcard at either end of 7 natural cards) 150. A royal buraco (all the 13 cards of a suit) is
@@ -44,7 +46,7 @@ Defaults follow the Italian tournament code (FITAB). All numbers are configurabl
   turn when melding, from the next turn when discarding.
 * Once the pozzetto is gone, discarding the last card **closes** the game: it needs a buraco on the table, and
   the card cannot be a wildcard. Melding the last card is not allowed. Closing is worth 100 points.
-* The game also ends, without closing bonus, with the turn of the player who draws the third last card of the stock.
+* The game also ends, without closing bonus, with the turn of the player who draws the third-to-last card of the stock.
 * Each team scores the buraco bonuses, the closing bonus and the value of its melded cards, minus the value of the
   cards left in the hands of its players and 100 points if it never took the pozzetto.
   Cards are worth 30 (joker), 20 (two), 15 (ace), 10 (8 to K) or 5 (3 to 7) points.
