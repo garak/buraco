@@ -190,6 +190,15 @@ class Game
     }
 
     /**
+     * The card on top of the stock, the next one to be drawn, or null when the stock is empty. It is face down:
+     * only its back is meant to be shown.
+     */
+    public function getTopOfStock(): ?Card
+    {
+        return $this->stock->top();
+    }
+
+    /**
      * The discard pile, from the bottom to the top.
      *
      * @return list<Card>

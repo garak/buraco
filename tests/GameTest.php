@@ -115,6 +115,7 @@ final class GameTest extends TestCase
             self::assertCount(11, $game->getHand($player));
         }
         self::assertSame(108 - 44 - 22 - 1, $game->getStockCount());
+        self::assertNotNull($game->getTopOfStock());
         self::assertCount(1, $game->getDiscards());
         self::assertNotNull($game->getTopDiscard());
         self::assertTrue($game->getTable($alice)->isEmpty());
@@ -176,6 +177,7 @@ final class GameTest extends TestCase
         self::assertSame('Kc,Kd,Ks,Js', (string) $game->getHand($bob));
         self::assertSame('Th', (string) $game->getTopDiscard());
         self::assertSame(53 - 8 - 6 - 1, $game->getStockCount());
+        self::assertSame('Qs', (string) $game->getTopOfStock());
 
         // not Bob's turn
         try {
@@ -193,6 +195,7 @@ final class GameTest extends TestCase
 
         // Alice draws, melds all but one card and takes the pozzetto with the discard
         self::assertSame('Qs', (string) $game->draw($alice));
+        self::assertSame('2s', (string) $game->getTopOfStock());
         self::assertSame(TurnPhase::Play, $game->getPhase());
         try {
             $game->draw($alice);
