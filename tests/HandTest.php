@@ -14,7 +14,7 @@ final class HandTest extends TestCase
     {
         $hand = Hand::createFromString('Kh,Ah,2c,wb');
         self::assertSame('Kh,Ah,2c,wb', (string) $hand);
-        self::assertSame('2♣ A♥ K♥ wb', $hand->toText());
+        self::assertSame('2♣ K♥ A♥ wb', $hand->toText());
     }
 
     #[Test]

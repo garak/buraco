@@ -14,6 +14,6 @@ final class CardSorterTest extends TestCase
     {
         $cards = \array_map(static fn (string $rs): Card => Card::fromRankSuit($rs), ['wb', 'Kh', 'Ah', '2c', 'Ac', 'Td', 'wr', '3s', '2h']);
         CardSorter::sort($cards);
-        self::assertSame('Ac,2c,Td,Ah,2h,Kh,3s,wb,wr', \implode(',', $cards));
+        self::assertSame('2c,Ac,Td,2h,Kh,Ah,3s,wb,wr', \implode(',', $cards));
     }
 }

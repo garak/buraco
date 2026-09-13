@@ -5,7 +5,7 @@ namespace Garak\Buraco;
 use Garak\Card\Card;
 
 /**
- * Sorts by suit, then by value (ace first). Jokers go last.
+ * Sorts by suit, then by value (ace after the king). Jokers go last.
  */
 final class CardSorter
 {
@@ -22,7 +22,7 @@ final class CardSorter
                 return $card1->getSuit()->getInt() <=> $card2->getSuit()->getInt();
             }
 
-            return CardValue::of($card1) <=> CardValue::of($card2);
+            return CardValue::of($card1, aceHigh: true) <=> CardValue::of($card2, aceHigh: true);
         });
     }
 }
