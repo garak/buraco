@@ -106,7 +106,9 @@ final class RunTest extends TestCase
         yield 'joker as high ace' => ['wb,Kh,Qh', 'Qh,Kh,wb', 'wb'];
         yield 'joker as low ace' => ['3h,wb,Ah', 'Ah,wb,3h', 'wb'];
         yield 'two of the suit in its natural place' => ['4c,2c,3c', '2c,3c,4c', null];
-        yield 'two of the suit as a wildcard when it does not fit' => ['5h,4h,2h', '2h,4h,5h', '2h'];
+        yield 'two of the suit as a wildcard when it does not fit' => ['5h,4h,2h', '4h,5h,2h', '2h'];
+        yield 'two of the suit natural rather than a wildcard at the top' => ['3h,4h,5h,2h', '2h,3h,4h,5h', null];
+        yield 'two of the suit natural in a buraco' => ['3h,4h,5h,6h,7h,8h,2h', '2h,3h,4h,5h,6h,7h,8h', null];
         yield 'two of the suit as a wildcard below the ace high' => ['Kh,2h,Ah', '2h,Kh,Ah', '2h'];
         yield 'two of another suit as a wildcard' => ['7d,5d,2c', '5d,2c,7d', '2c'];
         yield 'natural two plus a wildcard' => ['2c,3h,Ah,2h', 'Ah,2h,3h,2c', '2c'];

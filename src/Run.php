@@ -70,7 +70,9 @@ final class Run extends Meld
         }
         $card = \array_shift($movable);
         $positions = \range(\count($cards), 0);
-        if (CardValue::isTwo($card) && $card->getSuit()->isEqual($suit)) {
+        // a two of the suit goes before the three first, where it is natural; anywhere else it is a wildcard
+        // like any other, and reads better at the top of the run than at the bottom
+        if (CardValue::isTwo($card) && $card->getSuit()->isEqual($suit) && isset($cards[0]) && !CardValue::isWildcard($cards[0]) && 3 === CardValue::of($cards[0])) {
             \array_unshift($positions, 0);
         }
         foreach ($positions as $i) {
@@ -128,6 +130,25 @@ final class Run extends Meld
         }
         $this->values = \range($first, $last);
         $this->suit = $suit;
+    }
+
+    /**
+     * Whether this run makes better use of the cards than the given one, which holds the same cards in another
+     * order: a natural two beats a two spent as a wildcard, and a wildcard at either end of the run beats one
+     * in the middle, because the run can still grow into a semi-clean buraco.
+     */
+    public function isBetterThan(self $run): bool
+    {
+        return $this->quality() > $run->quality();
+    }
+
+    private function quality(): int
+    {
+        if (null === $this->wildcardIndex) {
+            return 2;
+        }
+
+        return 0 === $this->wildcardIndex || \count($this->cards) - 1 === $this->wildcardIndex ? 1 : 0;
     }
 
     public function getBuraco(): ?Buraco

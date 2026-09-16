@@ -60,7 +60,13 @@ final class MeldTest extends TestCase
         // a set is still guessed first
         self::assertInstanceOf(Set::class, Meld::createFromString('Ks,Kh,Kd', anyOrder: true));
         // cards already making a run are kept as given
-        self::assertSame('3h,4h,5h,2h', (string) Meld::createFromString('3h,4h,5h,2h', anyOrder: true));
+        self::assertSame('3h,4h,5h,6h', (string) Meld::createFromString('3h,4h,5h,6h', anyOrder: true));
+        self::assertSame('5d,2c,7d', (string) Meld::createFromString('5d,2c,7d', anyOrder: true));
+        // unless another order spends the wildcard better: the two of the suit is natural before the three
+        self::assertSame('2h,3h,4h,5h', (string) Meld::createFromString('3h,4h,5h,2h', anyOrder: true));
+        self::assertSame('2h,3h,4h,5h,6h,7h,8h', (string) Meld::createFromString('3h,4h,5h,6h,7h,8h,2h', anyOrder: true));
+        // a wildcard at the end of the run beats one in the middle
+        self::assertSame('4h,5h,6h,wb', (string) Meld::createFromString('4h,5h,wb,6h', anyOrder: true));
         self::assertSame('Ah,2h,3h', (string) Meld::fromCards(['a' => Card::fromRankSuit('3h'), 'b' => Card::fromRankSuit('2h'), 'c' => Card::fromRankSuit('Ah')], anyOrder: true));
     }
 

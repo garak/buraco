@@ -45,7 +45,7 @@ abstract class Meld implements \Countable, \Stringable
     public static function fromCards(array $cards, bool $anyOrder = false): self
     {
         try {
-            return self::guess($cards);
+            $meld = self::guess($cards);
         } catch (InvalidMeldException $e) {
             if (!$anyOrder) {
                 throw $e;
@@ -53,6 +53,15 @@ abstract class Meld implements \Countable, \Stringable
 
             return Run::fromAnyOrder($cards) ?? throw $e;
         }
+        // the cards can read as a run as they are and still make a better one in another order: "3h,4h,5h,2h"
+        // spends the two as a wildcard, while "2h,3h,4h,5h" keeps it natural
+        if ($anyOrder && $meld instanceof Run && $meld->hasWildcard()) {
+            $best = Run::fromAnyOrder($cards);
+
+            return null !== $best && $best->isBetterThan($meld) ? $best : $meld;
+        }
+
+        return $meld;
     }
 
     /**
