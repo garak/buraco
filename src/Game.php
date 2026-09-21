@@ -104,12 +104,15 @@ class Game
     /**
      * Starts the hand: deals the cards, sets the pozzetti aside, turns the first card of the stock face up.
      *
-     * @param array<int, Card>|null $deck Pre-arranged deck, useful for testing: hand size cards to each player in turn,
-     *                                    then pozzetto size cards to each team, then the card that starts the discard
-     *                                    pile, then the stock (the next card to be drawn first).
-     *                                    If null, a shuffled deck built from the rules is used.
+     * @param array<int, Card>|null $deck   Pre-arranged deck, useful for testing: hand size cards to each player in turn,
+     *                                      then pozzetto size cards to each team, then the card that starts the discard
+     *                                      pile, then the stock (the next card to be drawn first).
+     *                                      If null, a shuffled deck built from the rules is used.
+     * @param int                   $opener The index of the player who plays first, in joining order. The deal
+     *                                      moves round the table from one hand to the next, so the opening turn
+     *                                      does too; the teams stay as they are.
      */
-    public function deal(?array $deck = null): void
+    public function deal(?array $deck = null, int $opener = 0): void
     {
         if (GameStatus::Waiting !== $this->status) {
             throw new IllegalMoveException('Cards already dealt.');
@@ -117,6 +120,9 @@ class Game
         $count = $this->players->count();
         if (2 !== $count && 4 !== $count) {
             throw new IllegalMoveException('Two or four players are needed.');
+        }
+        if ($opener < 0 || $opener >= $count) {
+            throw new \InvalidArgumentException(\sprintf('The opener must be a player between 0 and %d, %d given.', $count - 1, $opener));
         }
         $cards = $deck ?? $this->rules->createDeck();
         $needed = $count * $this->rules->handSize + 2 * $this->rules->pozzettoSize + 2 + $this->rules->unplayableStockCards;
@@ -136,6 +142,7 @@ class Game
             $this->tables[$team->value] = new Table();
         }
         $this->discards = new Pile([$this->stock->draw()]);
+        $this->current = $opener;
         $this->status = GameStatus::Playing;
     }
 

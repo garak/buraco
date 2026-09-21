@@ -129,6 +129,36 @@ final class GameTest extends TestCase
     }
 
     #[Test]
+    public function theOpenerPlaysFirst(): void
+    {
+        $game = new Game();
+        $alice = new StubPlayer('Alice');
+        $bob = new StubPlayer('Bob');
+        $carol = new StubPlayer('Carol');
+        $dave = new StubPlayer('Dave');
+        foreach ([$alice, $bob, $carol, $dave] as $player) {
+            $game->join($player);
+        }
+        $game->deal(opener: 1);
+        self::assertSame($bob, $game->getCurrentPlayer());
+        // the teams do not move with the opening turn
+        self::assertSame(Team::Second, $game->getTeam($bob));
+        $game->draw($bob);
+        $game->discard($bob, $game->getHand($bob)->getCards()[0]);
+        self::assertSame($carol, $game->getCurrentPlayer());
+    }
+
+    #[Test]
+    public function theOpenerMustBeAtTheTable(): void
+    {
+        $game = new Game();
+        $game->join(new StubPlayer('Alice'));
+        $game->join(new StubPlayer('Bob'));
+        $this->expectException(\InvalidArgumentException::class);
+        $game->deal(opener: 2);
+    }
+
+    #[Test]
     public function noCurrentPlayerBeforeDeal(): void
     {
         $game = new Game();

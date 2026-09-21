@@ -11,6 +11,7 @@ return (new PhpCsFixer\Config())
         '@Symfony' => true,
         '@Symfony:risky' => true,
         '@PHP8x3Migration' => true,
+        '@PHP8x3Migration:risky' => true,
         '@PHPUnit10x0Migration:risky' => true,
         'declare_strict_types' => false,
         'native_function_invocation' => ['include' => ['@all']],

@@ -83,7 +83,7 @@ $game->join($marty);
 $game->join($biff);
 $game->deal();
 
-$player = $game->getCurrentPlayer();  // Marty
+$player = $game->getCurrentPlayer();  // Marty; deal(opener: 1) would make it Biff, for the next hand of a match
 echo $game->getHand($player)->toText();
 echo $game->getPhase()->name;         // Draw
 echo $game->getTopDiscard();
