@@ -4,6 +4,7 @@ namespace Garak\Buraco;
 
 use Garak\Buraco\Exception\InvalidMeldException;
 use Garak\Card\Card;
+use Garak\Card\CardBag;
 
 /**
  * A valid combination of cards laid on the table: a Set (cards of the same rank) or a Run (a sequence of the
@@ -147,7 +148,7 @@ abstract class Meld implements \Countable, \Stringable
      */
     public function getPoints(): int
     {
-        return \array_sum(\array_map(static fn (Card $card): int => CardValue::points($card), $this->cards));
+        return CardValue::sum($this->cards);
     }
 
     public function isBuraco(): bool

@@ -88,7 +88,7 @@ final readonly class Table implements \Countable, \Stringable
      */
     public function getPoints(): int
     {
-        return \array_sum(\array_map(static fn (Meld $meld): int => $meld->getPoints(), $this->melds));
+        return CardValue::sum($this->getCards());
     }
 
     public function isEmpty(): bool

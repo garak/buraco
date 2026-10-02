@@ -3,6 +3,7 @@
 namespace Garak\Buraco;
 
 use Garak\Card\Card;
+use Garak\Card\Deck;
 use Garak\Card\Rank;
 
 /**
@@ -90,25 +91,21 @@ final readonly class Rules
     }
 
     /**
-     * Builds the deck for a game, unshuffled: all regular cards from every deck, plus the configured number of jokers.
+     * The cards of a game: all regular cards from every deck, plus the configured number of jokers.
+     */
+    public function getDeck(): Deck
+    {
+        return new Deck(copies: $this->decks, jokers: $this->jokers);
+    }
+
+    /**
+     * Builds the deck for a game, unshuffled, see getDeck().
      *
      * @return list<Card>
      */
     public function createDeck(): array
     {
-        $jokersLeft = $this->jokers;
-        $deck = [];
-        foreach (Card::getDeck(num: $this->decks, allowJokers: $this->jokers > 0) as $card) {
-            if (Rank::Joker === $card->getRank()) {
-                if ($jokersLeft <= 0) {
-                    continue;
-                }
-                --$jokersLeft;
-            }
-            $deck[] = $card;
-        }
-
-        return $deck;
+        return $this->getDeck()->getCards();
     }
 
     /**
