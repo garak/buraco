@@ -18,6 +18,13 @@ final class HandTest extends TestCase
     }
 
     #[Test]
+    public function sortBySuitThenValueJokersLast(): void
+    {
+        $hand = Hand::createFromString('wb,Kh,Ah,2c,Ac,Td,wr,3s,2h');
+        self::assertSame('2♣ A♣ T♦ 2♥ K♥ A♥ 3♠ wb wr', $hand->toText());
+    }
+
+    #[Test]
     public function pointsOfCardsInHand(): void
     {
         self::assertSame(75, Hand::createFromString('Kh,Ah,2c,wb')->getPoints());

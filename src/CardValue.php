@@ -3,6 +3,7 @@
 namespace Garak\Buraco;
 
 use Garak\Card\Card;
+use Garak\Card\CardValues;
 use Garak\Card\Rank;
 
 /**
@@ -16,7 +17,7 @@ final class CardValue
 
     public static function isJoker(Card $card): bool
     {
-        return Rank::Joker === $card->getRank();
+        return $card->isJoker();
     }
 
     public static function isTwo(Card $card): bool
@@ -29,7 +30,7 @@ final class CardValue
      */
     public static function isWildcard(Card $card): bool
     {
-        return self::isJoker($card) || self::isTwo($card);
+        return $card->isJoker() || self::isTwo($card);
     }
 
     /**
@@ -42,11 +43,11 @@ final class CardValue
 
     public static function ofRank(Rank $rank, bool $aceHigh = false): int
     {
-        return match ($rank) {
-            Rank::Ace => $aceHigh ? self::ACE_HIGH : self::ACE_LOW,
-            Rank::Joker => throw new \InvalidArgumentException('A joker has no value on its own.'),
-            default => $rank->getInt(),
-        };
+        if ($rank->isJoker()) {
+            throw new \InvalidArgumentException('A joker has no value on its own.');
+        }
+
+        return ($aceHigh ? CardValues::aceHigh() : CardValues::aceLow())->ofRank($rank);
     }
 
     /**
@@ -54,12 +55,33 @@ final class CardValue
      */
     public static function points(Card $card): int
     {
-        return match ($card->getRank()) {
-            Rank::Joker => 30,
-            Rank::Two => 20,
-            Rank::Ace => 15,
-            Rank::King, Rank::Queen, Rank::Jack, Rank::Ten, Rank::Nine, Rank::Eight => 10,
-            default => 5,
-        };
+        return self::pointValues()->of($card);
+    }
+
+    /**
+     * Points of the cards, see points().
+     *
+     * @param iterable<Card> $cards
+     */
+    public static function sum(iterable $cards): int
+    {
+        return self::pointValues()->sum($cards);
+    }
+
+    private static function pointValues(): CardValues
+    {
+        static $values = new CardValues([
+            Rank::Joker->value => 30,
+            Rank::Two->value => 20,
+            Rank::Ace->value => 15,
+            Rank::King->value => 10,
+            Rank::Queen->value => 10,
+            Rank::Jack->value => 10,
+            Rank::Ten->value => 10,
+            Rank::Nine->value => 10,
+            Rank::Eight->value => 10,
+        ], default: 5);
+
+        return $values;
     }
 }

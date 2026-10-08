@@ -7,7 +7,9 @@ use Doctrine\Common\Collections\Collection;
 use Garak\Buraco\Exception\IllegalMoveException;
 use Garak\Buraco\Exception\NotYourTurnException;
 use Garak\Card\Card;
+use Garak\Card\CardBag;
 use Garak\Card\Pile;
+use Random\Randomizer;
 
 /**
  * A single hand ("smazzata") of buraco, for two players or two partnerships of two.
@@ -104,15 +106,17 @@ class Game
     /**
      * Starts the hand: deals the cards, sets the pozzetti aside, turns the first card of the stock face up.
      *
-     * @param array<int, Card>|null $deck   Pre-arranged deck, useful for testing: hand size cards to each player in turn,
-     *                                      then pozzetto size cards to each team, then the card that starts the discard
-     *                                      pile, then the stock (the next card to be drawn first).
-     *                                      If null, a shuffled deck built from the rules is used.
-     * @param int                   $opener The index of the player who plays first, in joining order. The deal
-     *                                      moves round the table from one hand to the next, so the opening turn
-     *                                      does too; the teams stay as they are.
+     * @param array<int, Card>|null $deck       Pre-arranged deck, useful for testing: hand size cards to each player in turn,
+     *                                          then pozzetto size cards to each team, then the card that starts the discard
+     *                                          pile, then the stock (the next card to be drawn first).
+     *                                          If null, a shuffled deck built from the rules is used.
+     * @param int                   $opener     The index of the player who plays first, in joining order. The deal
+     *                                          moves round the table from one hand to the next, so the opening turn
+     *                                          does too; the teams stay as they are.
+     * @param Randomizer|null       $randomizer Shuffles the deck built from the rules: pass a seeded one for a
+     *                                          reproducible deal. Ignored with a pre-arranged deck.
      */
-    public function deal(?array $deck = null, int $opener = 0): void
+    public function deal(?array $deck = null, int $opener = 0, ?Randomizer $randomizer = null): void
     {
         if (GameStatus::Waiting !== $this->status) {
             throw new IllegalMoveException('Cards already dealt.');
@@ -124,21 +128,17 @@ class Game
         if ($opener < 0 || $opener >= $count) {
             throw new \InvalidArgumentException(\sprintf('The opener must be a player between 0 and %d, %d given.', $count - 1, $opener));
         }
-        $cards = $deck ?? $this->rules->createDeck();
+        $cards = $deck ?? $this->rules->getDeck()->shuffle($randomizer);
         $needed = $count * $this->rules->handSize + 2 * $this->rules->pozzettoSize + 2 + $this->rules->unplayableStockCards;
         if (\count($cards) < $needed) {
             throw new IllegalMoveException(\sprintf('At least %d cards are needed to deal to %d players, %d given.', $needed, $count, \count($cards)));
         }
-        // the stock is drawn from the top, so the first card of the deck must end up on top
-        $this->stock = new Pile(\array_reverse($cards));
-        if (null === $deck) {
-            $this->stock->shuffle();
-        }
+        $this->stock = Pile::createFromTop($cards);
         for ($i = 0; $i < $count; ++$i) {
-            $this->hands[$i] = new Hand($this->drawMany($this->rules->handSize));
+            $this->hands[$i] = new Hand($this->stock->drawMany($this->rules->handSize));
         }
         foreach (Team::cases() as $team) {
-            $this->pozzetti[$team->value] = $this->drawMany($this->rules->pozzettoSize);
+            $this->pozzetti[$team->value] = $this->stock->drawMany($this->rules->pozzettoSize);
             $this->tables[$team->value] = new Table();
         }
         $this->discards = new Pile([$this->stock->draw()]);
@@ -267,10 +267,7 @@ class Game
         }
         $cards = $this->discards->takeAll();
         $this->singleTaken = 1 === \count($cards) ? $cards[0] : null;
-        foreach ($cards as $card) {
-            $hand = $hand->add($card);
-        }
-        $this->hands[$index] = $hand;
+        $this->hands[$index] = $hand->addMany($cards);
         $this->phase = TurnPhase::Play;
 
         return $cards;
@@ -299,16 +296,16 @@ class Game
         $after = new CardBag($layout->getCards());
         $removed = $before->diff($after);
         if ([] !== $removed) {
-            throw new IllegalMoveException(\sprintf('Cards cannot leave the table: %s.', \implode(',', $removed)));
+            throw new IllegalMoveException(\sprintf('Cards cannot leave the table: %s.', self::cardsToString($removed)));
         }
         $played = $after->diff($before);
         if ([] === $played) {
             throw new IllegalMoveException('At least one card from the hand must be melded.');
         }
         $hand = $this->hands[$index];
-        $notInHand = (new CardBag(\array_map(static fn (string $rs): Card => Card::fromRankSuit($rs), $played)))->diff(new CardBag($hand->getCards()));
+        $notInHand = (new CardBag($played))->diff(new CardBag($hand->getCards()));
         if ([] !== $notInHand) {
-            throw new IllegalMoveException(\sprintf('Cards not in hand: %s.', \implode(',', $notInHand)));
+            throw new IllegalMoveException(\sprintf('Cards not in hand: %s.', self::cardsToString($notInHand)));
         }
         $this->assertMeldsGrow($table, $layout);
         $ranks = [];
@@ -325,9 +322,7 @@ class Game
         if ($this->hasTakenPozzetto($team) && \count($played) === \count($hand)) {
             throw new IllegalMoveException('Cannot close by melding all the cards: a final discard is required.');
         }
-        foreach ($played as $rs) {
-            $hand = $hand->play(Card::fromRankSuit($rs));
-        }
+        $hand = $hand->playMany($played);
         if (1 === \count($hand)) {
             try {
                 $this->assertDiscardable($hand->getCards()[0], $hand, $layout, $team);
@@ -491,15 +486,12 @@ class Game
         $this->singleTaken = null;
     }
 
-    /** @return list<Card> */
-    private function drawMany(int $count): array
+    /**
+     * @param list<Card> $cards
+     */
+    private static function cardsToString(array $cards): string
     {
-        $cards = [];
-        for ($i = 0; $i < $count; ++$i) {
-            $cards[] = $this->stock->draw();
-        }
-
-        return $cards;
+        return \implode(',', \array_map(static fn (Card $card): string => $card->toString(true), $cards));
     }
 
     private function assertPlaying(): void

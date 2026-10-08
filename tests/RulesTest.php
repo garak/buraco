@@ -63,6 +63,7 @@ final class RulesTest extends TestCase
         $deck = (new Rules(decks: $decks, jokers: $jokers))->createDeck();
         self::assertCount($expectedCards, $deck);
         self::assertCount($jokers, \array_filter($deck, static fn (Card $card): bool => CardValue::isJoker($card)));
+        self::assertCount($expectedCards, (new Rules(decks: $decks, jokers: $jokers))->getDeck());
     }
 
     /** @return iterable<string, array{int, int, int}> */

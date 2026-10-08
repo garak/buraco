@@ -60,6 +60,13 @@ final class CardValueTest extends TestCase
         self::assertSame($expected, CardValue::points(Card::fromRankSuit($card)));
     }
 
+    #[Test]
+    public function sumOfPoints(): void
+    {
+        self::assertSame(75, CardValue::sum(\array_map(static fn (string $rs): Card => Card::fromRankSuit($rs), ['wb', '2c', 'Ah', '7d', '3s'])));
+        self::assertSame(0, CardValue::sum([]));
+    }
+
     /** @return iterable<string, array{string, int}> */
     public static function pointsProvider(): iterable
     {

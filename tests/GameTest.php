@@ -14,6 +14,8 @@ use Garak\Card\Card;
 use Garak\Card\Rank;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Random\Engine\Mt19937;
+use Random\Randomizer;
 
 /**
  * TODO when PHP 8.3 support is dropped (PHPUnit 13 only): the try/catch blocks in dealNeedsTwoOrFourPlayers()
@@ -599,6 +601,21 @@ final class GameTest extends TestCase
         $game->deal();
 
         return $game;
+    }
+
+    #[Test]
+    public function seededDealIsReproducible(): void
+    {
+        $deal = static function (): string {
+            $game = new Game();
+            $alice = new StubPlayer('Alice');
+            $game->join($alice);
+            $game->join(new StubPlayer('Bob'));
+            $game->deal(randomizer: new Randomizer(new Mt19937(42)));
+
+            return $game->getHand($alice)->toString(true).'|'.$game->getTopDiscard();
+        };
+        self::assertSame($deal(), $deal());
     }
 
     /** @return list<Card> */
